@@ -50,7 +50,8 @@ svg.ico{width:1em;height:1em;flex:none;fill:currentColor;vertical-align:-0.12em}
 .cabecera{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
 .marca{font-family:var(--titular);font-weight:700;font-size:1.75rem;line-height:1;letter-spacing:.01em;margin:0}
 .marca small{display:block;font-family:var(--cuerpo);font-weight:400;font-size:.875rem;color:var(--tinta-2);letter-spacing:0;margin-top:4px}
-.acciones{display:flex;align-items:center;gap:8px;min-width:0}
+.acciones{display:flex;align-items:center;gap:8px;flex:none}
+.cabecera .marca{flex:1 1 0;min-width:0}
 .btn-tema{width:42px;height:42px;flex:none;border-radius:50%;border:1.5px solid var(--tinta);background:transparent;display:grid;place-items:center;font-size:1.125rem}
 .btn-tema:hover{background:var(--tinta);color:var(--fondo)}
 :root[data-tema="oscuro"] .btn-tema .luna,:root[data-tema="claro"] .btn-tema .sol{display:none}
@@ -125,10 +126,13 @@ svg.ico{width:1em;height:1em;flex:none;fill:currentColor;vertical-align:-0.12em}
 .aviso ul{margin:6px 0 0;padding-left:20px}
 
 /* ───────── Calendario ───────── */
-.calendario{display:grid;grid-template-columns:44px repeat(5,minmax(0,1fr));gap:6px}
+.calendario{display:grid;grid-template-columns:62px repeat(5,minmax(0,1fr)) repeat(2,minmax(0,.55fr));gap:6px}
 .cal-cab{font-family:var(--titular);font-weight:600;font-size:1.0625rem;padding:0 4px 2px;color:var(--tinta-2)}
-.cal-sem{font-family:var(--titular);font-weight:600;font-size:1.0625rem;color:var(--tinta-2);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
-.cal-sem small{font-family:var(--cuerpo);font-size:.6875rem;font-weight:400}
+.cal-sem{font-family:var(--titular);font-weight:700;font-size:2rem;color:var(--tinta);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1;border:1.5px solid var(--linea);border-radius:6px}
+.cal-sem small{font-family:var(--cuerpo);font-size:.75rem;font-weight:500;color:var(--tinta-2)}
+.cal-sem.actual{background:var(--tinta);border-color:var(--tinta);color:var(--fondo)}
+.cal-sem.actual small{color:inherit;opacity:.8}
+.cal-cab.cab-sem{text-align:center;padding:0 0 2px}
 .dia{position:relative;text-align:left;border:1.5px solid transparent;border-radius:6px;padding:8px 10px 10px;min-height:96px;display:flex;flex-direction:column;gap:4px;background:var(--superficie);min-width:0}
 .dia.vacio{background:transparent;border:1.5px dashed var(--linea)}
 .dia .n{font-family:var(--titular);font-weight:700;font-size:1.625rem;line-height:1;display:flex;align-items:center;justify-content:space-between;gap:4px}
@@ -138,6 +142,9 @@ svg.ico{width:1em;height:1em;flex:none;fill:currentColor;vertical-align:-0.12em}
 .dia[data-estado="remoto"]{background:var(--remoto);color:var(--remoto-tinta)}
 .dia[data-estado="feriado"]{background:var(--feriado);color:var(--feriado-tinta)}
 .dia[data-estado="sindato"]{color:var(--tinta-2)}
+.dia[data-estado="finde"]{background:color-mix(in srgb,var(--superficie) 70%,transparent);color:var(--tinta-2)}
+.dia[data-estado="finde"] .n{font-size:1.25rem}
+.cal-cab.finde{opacity:.7}
 .dia.pasado{opacity:.62}
 .dia.hoy{border-color:var(--tinta);box-shadow:0 0 0 1.5px var(--tinta);opacity:1}
 .dia[aria-pressed="true"]{border-color:var(--tinta)}
@@ -205,9 +212,12 @@ svg.ico{width:1em;height:1em;flex:none;fill:currentColor;vertical-align:-0.12em}
   .col-der{grid-template-columns:1fr}
 }
 @container cal (max-width:520px){
-  .calendario{grid-template-columns:24px repeat(5,minmax(0,1fr));gap:4px}
+  .calendario{grid-template-columns:30px repeat(5,minmax(0,1fr)) repeat(2,minmax(0,.62fr));gap:3px}
+  .dia[data-estado="finde"] .n{font-size:1.0625rem}
+  .dia[data-estado="finde"]{padding:6px 2px}
   .cal-cab{font-size:.9375rem;text-align:center;padding:0}
-  .cal-sem{font-size:.875rem}.cal-sem small{display:none}
+  .cal-sem{font-size:1.125rem;border-width:1px;border-radius:4px}.cal-sem small{display:none}
+  .cal-cab.cab-sem{font-size:.75rem}
   .dia{min-height:74px;padding:6px 5px;align-items:center;text-align:center}
   .dia .n{font-size:1.375rem;flex-direction:column}
   .dia .n em{font-size:.5625rem;padding:1px 5px}
@@ -415,7 +425,7 @@ function mesDesdeLibro(info, y, m){
   for (const c of info.celdas){
     if (c.dia < 1 || c.dia > diasDelMes(y,m)){ datos.avisos.push(`El día ${c.dia} no existe en ${MESES[m]} de ${y}.`); continue; }
     if (info.colLunes !== null){
-      const esperado = c.col - info.colLunes + 1, real = new Date(y,m,c.dia).getDay();
+      const esperado = (c.col - info.colLunes + 1) % 7, real = new Date(y,m,c.dia).getDay();
       if (esperado !== real) datos.avisos.push(`El día ${c.dia} está en la columna de ${DIAS[esperado]||'?'} pero en ${MESES[m]} de ${y} cae ${DIAS[real]}.`);
     }
     c.eq.forEach(n => { if (!conocidos.has(slug(n))) nuevos.add(n); });
@@ -488,12 +498,12 @@ async function cargarCumples(){
 function estadoDe(fecha, equipo = estado.equipo){
   const datos = cache.get(claveMes(fecha.getFullYear(), fecha.getMonth()));
   const d = datos && datos.dias[fecha.getDate()];
-  if (!d) return { tipo:'sindato' };
+  if (!d) return { tipo: esFinde(fecha) ? 'finde' : 'sindato' };
   if (d.feriado) return { tipo:'feriado', d };
   if (!equipo) return { tipo:'todos', d };
   return { tipo: d.claves.includes(equipo) ? 'oficina' : 'remoto', d };
 }
-const TEXTO_ESTADO = { oficina:'Oficina', remoto:'Remoto', feriado:'Feriado', sindato:'Sin dato' };
+const TEXTO_ESTADO = { oficina:'Oficina', remoto:'Remoto', feriado:'Feriado', sindato:'Sin dato', finde:'Fin de semana' };
 const ICONO_ESTADO = { oficina:'oficina', remoto:'casa' };
 
 /* ───────── Etiqueta de hoy ───────── */
@@ -630,20 +640,19 @@ function pintarCalendario(){
       ${ult ? `<button class="btn-linea" data-ir="${ult}">Ver ${MESES[+ult.slice(5)-1]} de ${ult.slice(0,4)}</button>`:''}</div>`;
     return;
   }
-  let html = `<div class="cal-cab"><span class="solo-lector">Semana</span></div>` + [1,2,3,4,5].map(i => `<div class="cal-cab">${DIAS[i][0].toUpperCase()+DIAS[i].slice(1,3)}<span class="solo-lector">${DIAS[i].slice(3)}</span></div>`).join('');
+  let html = `<div class="cal-cab cab-sem">Sem<span class="solo-lector">ana</span></div>` + [1,2,3,4,5,6,0].map(i => `<div class="cal-cab${i===0||i===6?' finde':''}">${DIAS[i][0].toUpperCase()+DIAS[i].slice(1,3)}<span class="solo-lector">${DIAS[i].slice(3)}</span></div>`).join('');
   let f = new Date(y,m,1); f = sumar(f, 1 - (f.getDay()||7));               // lunes de la primera semana
   const fin = new Date(y,m+1,0);
   for (; f <= fin; f = sumar(f,7)){
-    const laborables = [0,1,2,3,4].map(i => sumar(f,i));
-    if (!laborables.some(d => d.getMonth()===m)) continue;
-    html += `<div class="cal-sem" title="Semana ${semanaISO(f)} del año"><small>sem</small>${semanaISO(f)}</div>`;
+    const laborables = [0,1,2,3,4,5,6].map(i => sumar(f,i));
+    html += `<div class="cal-sem${hoy>=f && hoy<=sumar(f,6)?' actual':''}" title="Semana ${semanaISO(f)} de ${semanasDelAnio(y)}${hoy>=f && hoy<=sumar(f,6)?' (semana actual)':''}"><small>semana</small>${semanaISO(f)}</div>`;
     for (const d of laborables){
       if (d.getMonth() !== m){ html += `<div class="dia vacio" aria-hidden="true"></div>`; continue; }
       const s = estadoDe(d), n = d.getDate(), cumplen = (cumples||[]).filter(c => c.m===m+1 && c.d===n);
       const clases = ['dia', d<hoy?'pasado':'', mismaFecha(d,hoy)?'hoy':''].join(' ');
       let cuerpo = '';
       if (s.tipo==='todos') cuerpo = `<ul>${s.d.claves.map(k => `<li>${esc(equipos.get(k))}</li>`).join('')}</ul><span class="cuenta">${s.d.claves.length} eq.</span>`;
-      else if (s.tipo!=='sindato') cuerpo = `<span class="estado">${ICONO_ESTADO[s.tipo]?ico(ICONO_ESTADO[s.tipo]):''}${TEXTO_ESTADO[s.tipo]}</span>`;
+      else if (s.tipo!=='sindato' && s.tipo!=='finde') cuerpo = `<span class="estado">${ICONO_ESTADO[s.tipo]?ico(ICONO_ESTADO[s.tipo]):''}${TEXTO_ESTADO[s.tipo]}</span>`;
       const marcas = (s.d ? s.d.etiquetas.filter(t => !(t.tipo==='feriado' && s.tipo==='feriado')) : []).map(t => `<span class="marca-dia ${t.tipo}">${esc(t.texto)}</span>`).join('') +
         (cumplen.length ? `<span class="marca-dia cumple" title="${esc(cumplen.map(c=>c.n).join(', '))}">🎂${cumplen.length>1?' '+cumplen.length:''}</span>` : '');
       html += `<button class="${clases}" data-estado="${s.tipo}" data-dia="${n}" aria-pressed="${estado.diaSel===n}"
@@ -659,6 +668,12 @@ function pintarDetalle(){
   const { y, m, diaSel } = estado, datos = cache.get(claveMes(y,m)), el = $('detalle');
   const d = datos && diaSel && datos.dias[diaSel];
   if (!datos){ el.innerHTML = `<h2>Detalle del día</h2><p class="sub">Sin horario para este mes.</p>`; return; }
+  if (!d && diaSel && esFinde(new Date(y,m,diaSel))){
+    const f = new Date(y,m,diaSel), cumplen = (cumples||[]).filter(c => c.m===m+1 && c.d===diaSel);
+    el.innerHTML = `<h2>${DIAS[f.getDay()]} ${diaSel} de ${MESES[m]}</h2><p class="sub">Semana ${semanaISO(f)}</p><p>Fin de semana: no hay asistencia programada.</p>
+      ${cumplen.length ? `<h3>🎂 Cumpleaños</h3><ul class="lista-equipos"><li>${cumplen.map(c => esc(c.n)).join('</li><li>')}</li></ul>` : ''}`;
+    return;
+  }
   if (!d){ el.innerHTML = `<h2>Detalle del día</h2><p class="sub">Toca un día del calendario para ver qué equipos van a oficina y cuáles trabajan remoto.</p>`; return; }
   const f = new Date(y,m,diaSel), enOf = d.claves, enRe = [...equipos.keys()].filter(k => !enOf.includes(k) && Object.values(datos.dias).some(x => x.claves.includes(k)));
   const li = ks => ks.map(k => [k, equipos.get(k)]).sort((a,b)=>a[1].localeCompare(b[1],'es')).map(([k,n]) => `<li class="${k===estado.equipo?'mio':''}">${esc(n)}</li>`).join('');
